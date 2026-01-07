@@ -1,0 +1,398 @@
+USE master;
+GO
+IF EXISTS(SELECT NAME FROM SYS.DATABASES WHERE NAME = 'QUANLYDUAN')
+BEGIN 
+	ALTER DATABASE QUANLYDUAN SET SINGLE_USER WITH ROLLBACK IMMEDIATE ;
+	DROP DATABASE QUANLYDUAN ;
+END
+GO
+CREATE DATABASE QUANLYDUAN;
+GO 
+
+CREATE TABLE NCC(
+	MANCC CHAR(5) PRIMARY KEY ,
+	TEN VARCHAR (40),
+	HESO INT ,
+	THPHO VARCHAR(20),
+);
+GO 
+CREATE TABLE VATTU (
+	MAVT CHAR(5) PRIMARY KEY, 
+	TEN VARCHAR(40),
+	MAU VARCHAR (15),
+	TRLUONG FLOAT,
+	THPHO VARCHAR(20) 
+);
+GO
+CREATE TABLE DUAN (
+	MADA CHAR(5) PRIMARY KEY, 
+	TEN VARCHAR(40),
+	THPHO VARCHAR(20),
+);
+GO
+CREATE TABLE CC(
+	MANCC CHAR(5), 
+	MAVT CHAR(5),
+	MADA CHAR(5),
+	SLUONG INT ,
+	PRIMARY KEY(MANCC,MAVT,MADA),
+	FOREIGN KEY (MANCC)REFERENCES NCC(MANCC),
+	FOREIGN KEY (MAVT) REFERENCES VATTU(MAVT),
+	FOREIGN KEY (MADA) REFERENCES DUAN(MADA)
+);
+GO
+INSERT NCC VALUES
+('S1', 'Son' ,20, 'TpHCM'), 
+('S2' ,'Tran' ,10 ,'Ha Noi'), 
+('S3' ,'Bach', 30 ,'Ha Noi' ),
+('S4' ,'Lap', 20 ,'TpHCM' ),
+('S5' ,'Anh', 30 ,'Da Nang')
+GO 
+INSERT DUAN VALUES
+('J1', 'May phan loai', 'Ha Noi'), 
+('J2', 'Man hinh', 'Viet Tri') ,
+('J3', 'OCR' ,'Da Nang' ),
+('J4', 'Bang dieu khien', 'Da Nang'), 
+('J5', 'RAID' ,'TpHCM' ),
+('J6', 'EDS' ,'Hai Phong' ),
+('J7', 'Bang tu', 'TpHCM')
+GO
+INSERT VATTU VALUES
+('P1', 'Dai oc', 'Do', 12.0 ,'TpHCM') ,
+('P2', 'Bu long', 'Xanh la', 17.0 ,'Ha Noi'), 
+('P3', 'Dinh vit', 'Xanh duong', 17.0, 'Hai Phong'), 
+('P4', 'Dinh vit', 'Do', 14.0 ,'TpHCM' ),
+('P5', 'Cam', 'Xanh duong', 12.0, 'Ha Noi'), 
+('P6', 'Banh rang', 'Do', 19.0, 'TpHCM')
+GO
+INSERT CC VALUES
+('S1', 'P1', 'J1' ,200), 
+('S1', 'P1', 'J4' ,700), 
+('S2', 'P3', 'J1' ,400), 
+('S2', 'P3', 'J2' ,200), 
+('S2', 'P3', 'J3' ,200), 
+('S2', 'P3', 'J4' ,500), 
+('S2', 'P3', 'J5' ,600), 
+('S2', 'P3', 'J6' ,400), 
+('S2', 'P3', 'J7' ,800), 
+('S2', 'P5', 'J2' ,100), 
+('S3', 'P3', 'J1' ,200), 
+('S3', 'P4', 'J2' ,500), 
+('S4', 'P6', 'J3' ,300), 
+('S4', 'P6', 'J7' ,300), 
+('S5', 'P2', 'J2' ,200), 
+('S5', 'P2', 'J4' ,100), 
+('S5', 'P5', 'J5' ,500), 
+('S5', 'P5', 'J7' ,100), 
+('S5', 'P6', 'J2' ,200), 
+('S5', 'P1', 'J4' ,100), 
+('S5', 'P3', 'J4' ,200), 
+('S5', 'P4', 'J4' ,800), 
+('S5', 'P5', 'J4' ,400), 
+('S5', 'P6', 'J4' ,500)
+GO 
+---------
+-- 1. Cho biết quy cách màu và thành phố của các vật tư không được trữ tại Hà Nội có trọng lượng lớn hơn 10.
+SELECT MAU ,THPHO
+FROM VATTU
+WHERE THPHO <> 'Ha Noi' AND TRLUONG > 10;
+-- 2. Cho biết thông tin chi tiết của tất cả các dự án.
+SELECT *
+FROM DUAN;
+-- 3. Cho biết thông tin chi tiết của tất cả các dự án ở TpHCM.
+SELECT *
+FROM DUAN
+WHERE THPHO='TpHCM';
+-- 4. Cho biết tên nhà cung cấp cung cấp vật tư cho dự án J1.
+SELECT NC.TEN
+FROM NCC NC
+JOIN CC ON NC.MANCC = CC.MANCC
+WHERE CC.MADA='J1';
+-- 5. Cho biết tên nhà cung cấp , tên vật tư và tên dự án mà số lượng vật tư được cung cấp cho dự án bởi nhà cung cấp lớn hơn 300 và nhỏ hơn 750 .
+SELECT VT.TEN,DA.TEN,CC.SLUONG
+FROM CC
+JOIN VATTU VT ON CC.MAVT = VT.MAVT
+JOIN DUAN DA ON CC.MADA = DA.MADA
+WHERE CC.SLUONG >300 AND CC.SLUONG<750 
+-- 6. Cho biết thông tin chi tiết của các vật tư được cung cấp bởi các nhà cung cấp ở TpHCM.
+SELECT *
+FROM VATTU
+WHERE THPHO='TPHCM';
+-- 7. Cho biết mã số các vật tư được cung cấp cho các dự án tại TpHCM bởi các nhà cung cấp ở TpHCM.
+SELECT VT.MAVT
+FROM VATTU VT
+JOIN CC ON VT.MAVT = CC.MAVT
+WHERE VT.THPHO = 'TPHCM'
+-- 8. Liệt kê các cặp tên thành phố mà nhà cung cấp ở thành phố thứ nhất cung cấp vật tư được trữ tại thành phố thứ hai.
+SELECT DISTINCT 
+    NCC.ThPho AS ThanhPho_NhaCungCap,
+    VT.ThPho AS ThanhPho_LuuTruVatTu
+FROM NCC
+JOIN CC ON NCC.MaNCC = CC.MaNCC
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+WHERE NCC.ThPho <> VT.ThPho;
+-- 9. Liệt kê các cặp tên thành phố mà nhà cung cấp ở thành phố thứ nhất cung cấp vật tư cho dự án tại thành phố thứ hai.
+SELECT DISTINCT 
+    NCC.ThPho AS ThanhPho_NhaCungCap,
+    DA.ThPho AS ThanhPho_DuAn
+FROM NCC
+JOIN CC ON NCC.MaNCC = CC.MaNCC
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+WHERE NCC.ThPho <> DA.ThPho;
+-- 10. Liệt kê các cặp mã số nhà cung cấp ở cùng một thành phố.
+SELECT DISTINCT 
+	A.MANCC,
+	B.MANCC
+FROM NCC A
+JOIN NCC B ON A.THPHO=B.THPHO
+WHERE A.MANCC<B.MANCC
+-- 11. Cho biết mã số và tên các vật tư được cung cấp cho dự án cùng thành phố với nhà cung cấp.
+SELECT VT.TEN,VT.MAVT
+FROM VATTU VT
+JOIN CC ON VT.MAVT = CC.MAVT
+JOIN DUAN DA ON CC.MADA = DA.MADA
+JOIN NCC ON CC.MANCC= NCC.MANCC
+WHERE DA.THPHO = NCC.THPHO;
+-- 12. Cho biết mã số và tên các dự án được cung cấp vật tư bởi ít nhất một nhà cung cấp không cùng thành phố.
+SELECT DISTINCT DA.MaDA, DA.Ten
+FROM DUAN DA
+JOIN CC ON DA.MaDA = CC.MaDA
+JOIN NCC ON CC.MaNCC = NCC.MaNCC
+WHERE DA.ThPho <> NCC.ThPho;
+
+-- 13. Cho biết mã số nhà cung cấp và cặp mã số vật tư được cung cấp bởi nhà cung cấp này.
+SELECT DISTINCT MaNCC, MaVT
+FROM CC;
+
+-- 14. Cho biết mã số các vật tư được cung cấp bởi nhiều hơn một nhà cung cấp.
+SELECT MaVT
+FROM CC
+GROUP BY MaVT
+HAVING COUNT(DISTINCT MaNCC) > 1;
+
+-- 15. Với mỗi vật tư cho biết mã số và tổng số lượng được cung cấp cho các dự án.
+SELECT MaVT, SUM(SLuong) AS TongSoLuong
+FROM CC
+GROUP BY MaVT;
+
+-- 16. Cho biết tổng số các dự án được cung cấp vật tư bởi nhà cung cấp S1.
+SELECT COUNT(DISTINCT MaDA) AS SoDuAn
+FROM CC
+WHERE MaNCC = 'S1';
+
+-- 17. Cho biết tổng số lượng vật tư P1 được cung bởi nhà cung cấp S1.
+SELECT SUM(SLuong) AS TongSoLuong
+FROM CC
+WHERE MaNCC = 'S1' AND MaVT = 'P1';
+
+-- 18. Với mỗi vật tư được cung cấp cho một dự án, cho biết mã số, tên vật tư, tên dự án và tổng số lượng vật tư tương ứng.
+SELECT VT.MaVT, VT.Ten AS TenVT, DA.Ten AS TenDA, SUM(CC.SLuong) AS TongSoLuong
+FROM CC
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+GROUP BY VT.MaVT, VT.Ten, DA.Ten;
+
+-- 19. Cho biết mã số, tên các vật tư và tên dự án có số lượng vật tư trung bình cung cấp cho dự án lớn hơn 350.
+SELECT VT.MaVT, VT.Ten AS TenVT, DA.Ten AS TenDA
+FROM CC
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+GROUP BY VT.MaVT, VT.Ten, DA.Ten
+HAVING AVG(CC.SLuong) > 350;
+
+-- 20. Cho biết tên các dự án được cung cấp vật tư bởi nhà cung cấp S1.
+SELECT DISTINCT DA.Ten
+FROM CC
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+WHERE CC.MaNCC = 'S1';
+
+-- 21. Cho biết quy cách màu của các vật tư được cung cấp bởi nhà cung cấp S1.
+SELECT DISTINCT VT.Mau
+FROM CC
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+WHERE CC.MaNCC = 'S1';
+
+-- 22. Cho biết mã số và tên các vật tư được cung cấp cho một dự án bất kỳ ở TpHCM.
+SELECT DISTINCT VT.MaVT, VT.Ten
+FROM CC
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+WHERE DA.ThPho = 'TpHCM';
+
+-- 23. Cho biết mã số và tên các dự án sử dụng vật tư có thể được cung cấp bởi nhà cung cấp S1.
+SELECT DISTINCT DA.MaDA, DA.Ten
+FROM CC AS C1
+JOIN DUAN DA ON C1.MaDA = DA.MaDA
+WHERE C1.MaVT IN (
+    SELECT MaVT FROM CC WHERE MaNCC = 'S1'
+);
+
+-- 24. Cho biết mã số và tên nhà cung cấp có cung cấp vật tư có quy cách màu đỏ.
+SELECT DISTINCT NCC.MaNCC, NCC.Ten
+FROM CC
+JOIN VATTU VT ON CC.MaVT = VT.MaVT
+JOIN NCC ON CC.MaNCC = NCC.MaNCC
+WHERE VT.Mau = 'đỏ';
+
+-- 25. Cho biết tên các nhà cung cấp có chỉ số xếp hạng nhỏ hơn chỉ số lớn nhất.
+SELECT Ten
+FROM NCC
+WHERE Heso < (
+    SELECT MAX(Heso) FROM NCC
+);
+
+-- 26. Cho biết tên các nhà cung cấp không cung cấp vật tư P2.
+SELECT Ten
+FROM NCC
+WHERE MaNCC NOT IN (
+    SELECT MaNCC FROM CC WHERE MaVT = 'P2'
+);
+
+-- 27. Cho biết mã số và tên các nhà cung cấp đang cung cấp vật tư được cung cấp bởi nhà cung cấp có cung cấp vật tư với quy cách màu đỏ.
+SELECT DISTINCT NCC.MaNCC, NCC.Ten
+FROM NCC
+JOIN CC ON NCC.MaNCC = CC.MaNCC
+WHERE CC.MaVT IN (
+    SELECT MaVT FROM CC
+    JOIN VATTU VT ON CC.MaVT = VT.MaVT
+    WHERE VT.Mau = 'đỏ'
+);
+
+-- 28. Cho biết mã số và tên các nhà cung cấp có chỉ số xếp hạng cao hơn nhà cung cấp S1.
+SELECT MaNCC, Ten
+FROM NCC
+WHERE Heso > (
+    SELECT Heso FROM NCC WHERE MaNCC = 'S1'
+);
+
+-- 29. Cho biết mã số và tên các dự án được cung cấp vật tư P1 với số lượng vật tư trung bình lớn hơn tất cả các số lượng vật tư được cung cấp cho dự án J1.
+SELECT DA.MaDA, DA.Ten
+FROM CC
+JOIN DUAN DA ON CC.MaDA = DA.MaDA
+WHERE CC.MaVT = 'P1'
+GROUP BY DA.MaDA, DA.Ten
+HAVING AVG(CC.SLuong) > ALL (
+    SELECT SLuong FROM CC WHERE MaDA = 'J1'
+);
+
+-- 30. Cho biết mã số và tên các nhà cung cấp cung cấp vật tư P1 cho một dự án nào đó với số lượng lớn hơn số lượng trung bình của vật tư P1 được cung cấp cho dự án đó.
+SELECT DISTINCT NCC.MaNCC, NCC.Ten
+FROM CC
+JOIN NCC ON CC.MaNCC = NCC.MaNCC
+WHERE CC.MaVT = 'P1'
+  AND CC.SLuong > (
+      SELECT AVG(SLuong) FROM CC
+      WHERE MaVT = 'P1' AND MaDA = CC.MaDA
+  );
+
+-- 31. Cho biết mã số và tên các dự án không được cung cấp vật tư nào có quy cách màu đỏ bởi một nhà cung cấp bất kỳ ở TpHCM.
+SELECT DA.MaDA, DA.Ten
+FROM DUAN DA
+WHERE DA.MaDA NOT IN (
+    SELECT DISTINCT CC.MaDA
+    FROM CC
+    JOIN NCC ON CC.MaNCC = NCC.MaNCC
+    JOIN VATTU VT ON CC.MaVT = VT.MaVT
+    WHERE VT.Mau = 'đỏ' AND NCC.ThPho = 'TpHCM'
+);
+
+-- 32. Cho biết mã số và tên các dự án được cung cấp toàn bộ vật tư bởi nhà cung cấp S1.
+SELECT DA.MaDA, DA.Ten
+FROM DUAN DA
+WHERE NOT EXISTS (
+    SELECT *
+    FROM CC C1
+    WHERE C1.MaDA = DA.MaDA
+    AND C1.MaNCC <> 'S1'
+);
+
+-- 33. Cho biết tên các nhà cung cấp cung cấp tất cả các vật tư.
+SELECT NCC.Ten
+FROM NCC
+WHERE NOT EXISTS (
+    SELECT * FROM VATTU
+    WHERE MaVT NOT IN (
+        SELECT MaVT FROM CC WHERE CC.MaNCC = NCC.MaNCC
+    )
+);
+
+-- 34. Cho biết mã số và tên các vật tư được cung cấp cho tất cả các dự án tại TpHCM.
+SELECT VT.MaVT, VT.Ten
+FROM VATTU VT
+WHERE NOT EXISTS (
+    SELECT * FROM DUAN
+    WHERE ThPho = 'TpHCM'
+    AND MaDA NOT IN (
+        SELECT MaDA FROM CC WHERE MaVT = VT.MaVT
+    )
+);
+
+-- 35. Cho biết mã số và tên các nhà cung cấp cung cấp cùng một vật tư cho tất cả các dự án.
+SELECT DISTINCT NCC.MaNCC, NCC.Ten
+FROM NCC
+WHERE EXISTS (
+    SELECT MaVT
+    FROM VATTU
+    WHERE NOT EXISTS (
+        SELECT * FROM DUAN
+        WHERE NOT EXISTS (
+            SELECT * FROM CC
+            WHERE CC.MaNCC = NCC.MaNCC
+              AND CC.MaVT = VATTU.MaVT
+              AND CC.MaDA = DUAN.MaDA
+        )
+    )
+);
+
+-- 36. Cho biết mã số và tên các dự án được cung cấp tất cả các vật tư có thể được cung cấp bởi nhà cung cấp S1.
+SELECT DA.MaDA, DA.Ten
+FROM DUAN DA
+WHERE NOT EXISTS (
+    SELECT MaVT FROM CC WHERE MaNCC = 'S1'
+    EXCEPT
+    SELECT MaVT FROM CC WHERE MaDA = DA.MaDA
+);
+
+-- 37. Cho biết tất cả các thành phố mà nơi đó có ít nhất một nhà cung cấp, trữ ít nhất một vật tư hoặc có ít nhất một dự án.
+SELECT DISTINCT ThPho FROM NCC
+UNION
+SELECT DISTINCT ThPho FROM VATTU
+UNION
+SELECT DISTINCT ThPho FROM DUAN;
+
+-- 38. Cho biết mã số các vật tư hoặc được cung cấp bởi một nhà cung cấp ở TpHCM hoặc cung cấp cho một dự án tại TpHCM.
+SELECT DISTINCT MaVT
+FROM CC
+JOIN NCC ON CC.MaNCC = NCC.MaNCC
+WHERE NCC.ThPho = 'TpHCM'
+
+UNION
+
+SELECT DISTINCT MaVT
+FROM CC
+JOIN DUAN ON CC.MaDA = DUAN.MaDA
+WHERE DUAN.ThPho = 'TpHCM';
+
+-- 39. Liệt kê các cặp (mã số nhà cung cấp, mã số vật tư) mà nhà cung cấp không cấp vật tư.
+SELECT NCC.MaNCC, VT.MaVT
+FROM NCC, VATTU VT
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM CC
+    WHERE CC.MaNCC = NCC.MaNCC
+      AND CC.MaVT = VT.MaVT
+);
+-- 40. Liệt kê các cặp mã số nhà cung cấp có thể cung cấp cùng tất cả các loại vật tư.
+SELECT A.MaNCC, B.MaNCC
+FROM NCC A, NCC B
+WHERE A.MaNCC < B.MaNCC
+  AND NOT EXISTS (
+      SELECT MaVT FROM CC WHERE MaNCC = A.MaNCC
+      EXCEPT
+      SELECT MaVT FROM CC WHERE MaNCC = B.MaNCC
+  )
+  AND NOT EXISTS (
+      SELECT MaVT FROM CC WHERE MaNCC = B.MaNCC
+      EXCEPT
+      SELECT MaVT FROM CC WHERE MaNCC = A.MaNCC
+  );
